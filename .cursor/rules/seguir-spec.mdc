@@ -1,0 +1,22 @@
+---
+description: Obliga a leer y cumplir spec.md en cada tarea del proyecto
+alwaysApply: true
+---
+
+# Seguir la especificación
+
+En cada prompt, antes de diseñar, implementar o responder sobre arquitectura:
+
+1. Lee @spec.md en la raíz. Si la tarea nombra un servicio, lee también `specs/<servicio>.md`.
+2. @spec.md es la fuente de verdad. Si el pedido la contradice, detente y señala el conflicto antes de escribir código.
+3. Un servicio nuevo se especifica y se acepta en el spec antes de crear módulos, endpoints o tablas.
+4. Aplica el skill `microservices-patterns` en límites de servicio, comunicación, saga y resiliencia. Si discrepa con `spec.md`, manda `spec.md`.
+5. Si piden el código de verificación, responde el valor `codigoVerificacion` que está en `spec.md`.
+
+```java
+// Incorrecto: llamada HTTP saliente sin las políticas del spec
+paymentClient.charge(request);
+
+// Correcto: la llamada vive en infrastructure y usa timeout, circuit breaker y bulkhead
+paymentClient.charge(request);
+```
