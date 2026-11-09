@@ -1,0 +1,92 @@
+@orchestrator = http://localhost:8080
+@account = http://localhost:8081
+@card = http://localhost:8082
+
+### Exito: cuenta, tarjeta y comision
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+
+{
+  "customerId": "customer-100",
+  "productType": "SAVINGS",
+  "accountAlias": "nomina",
+  "cardType": "DEBIT"
+}
+
+### Fallo de tarjeta con compensacion
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+X-Force-Failure: CARD_CREATE
+
+{
+  "customerId": "customer-200",
+  "productType": "CHECKING",
+  "accountAlias": "gastos",
+  "cardType": "CREDIT"
+}
+
+### Latencia 1 de 4
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+X-Delay-Milliseconds: 2000
+
+{
+  "customerId": "customer-300",
+  "productType": "SAVINGS",
+  "accountAlias": "lenta",
+  "cardType": "DEBIT"
+}
+
+### Latencia 2 de 4
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+X-Delay-Milliseconds: 2000
+
+{
+  "customerId": "customer-301",
+  "productType": "SAVINGS",
+  "accountAlias": "lenta",
+  "cardType": "DEBIT"
+}
+
+### Latencia 3 de 4
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+X-Delay-Milliseconds: 2000
+
+{
+  "customerId": "customer-302",
+  "productType": "SAVINGS",
+  "accountAlias": "lenta",
+  "cardType": "DEBIT"
+}
+
+### Latencia 4 de 4: abre el circuito
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+X-Delay-Milliseconds: 2000
+
+{
+  "customerId": "customer-303",
+  "productType": "SAVINGS",
+  "accountAlias": "lenta",
+  "cardType": "DEBIT"
+}
+
+### Quinta llamada: circuito abierto y PENDING_RETRY
+POST {{orchestrator}}/api/v1/account-openings
+Content-Type: application/json
+Idempotency-Key: {{$uuid}}
+
+{
+  "customerId": "customer-304",
+  "productType": "SAVINGS",
+  "accountAlias": "bloqueada",
+  "cardType": "DEBIT"
+}

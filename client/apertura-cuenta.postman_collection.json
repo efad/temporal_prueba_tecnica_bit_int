@@ -1,0 +1,52 @@
+{
+  "info": {
+    "name": "Apertura de cuenta con saga",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "orchestrator", "value": "http://localhost:8080" }
+  ],
+  "item": [
+    {
+      "name": "Exito cuenta tarjeta y comision",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"customer-100\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"nomina\",\n  \"cardType\": \"DEBIT\"\n}"
+        },
+        "url": "{{orchestrator}}/api/v1/account-openings"
+      }
+    },
+    {
+      "name": "Fallo de tarjeta con compensacion",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" },
+          { "key": "X-Force-Failure", "value": "CARD_CREATE" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"customer-200\",\n  \"productType\": \"CHECKING\",\n  \"accountAlias\": \"gastos\",\n  \"cardType\": \"CREDIT\"\n}"
+        },
+        "url": "{{orchestrator}}/api/v1/account-openings"
+      }
+    },
+    {
+      "name": "Latencia para abrir el circuito",
+      "item": [
+        { "name": "Latencia 1", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }, { "key": "X-Delay-Milliseconds", "value": "2000" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"customer-301\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"lenta\",\n  \"cardType\": \"DEBIT\"\n}" }, "url": "{{orchestrator}}/api/v1/account-openings" } },
+        { "name": "Latencia 2", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }, { "key": "X-Delay-Milliseconds", "value": "2000" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"customer-302\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"lenta\",\n  \"cardType\": \"DEBIT\"\n}" }, "url": "{{orchestrator}}/api/v1/account-openings" } },
+        { "name": "Latencia 3", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }, { "key": "X-Delay-Milliseconds", "value": "2000" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"customer-303\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"lenta\",\n  \"cardType\": \"DEBIT\"\n}" }, "url": "{{orchestrator}}/api/v1/account-openings" } },
+        { "name": "Latencia 4", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }, { "key": "X-Delay-Milliseconds", "value": "2000" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"customer-304\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"lenta\",\n  \"cardType\": \"DEBIT\"\n}" }, "url": "{{orchestrator}}/api/v1/account-openings" } },
+        { "name": "Circuito abierto", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"customer-305\",\n  \"productType\": \"SAVINGS\",\n  \"accountAlias\": \"bloqueada\",\n  \"cardType\": \"DEBIT\"\n}" }, "url": "{{orchestrator}}/api/v1/account-openings" } }
+      ]
+    }
+  ]
+}
