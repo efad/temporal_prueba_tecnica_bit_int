@@ -2,7 +2,7 @@
 
 Tres microservicios Spring Boot abren una cuenta, emiten una tarjeta y cobran la comisión de emisión con una saga orquestada y circuit breaker.
 
-El proyecto se trabaja con **spec** y **skills**. `spec.md` es la fuente de verdad y `specs/apertura-cuenta-tarjeta-comision.md` describe esta historia. El skill `microservices-patterns` guía los patrones; sus ejemplos están en Python y aquí se implementan en Java. Si discrepan, manda el spec.
+El proyecto se trabaja con **spec** y **skills**. `spec.md` es la fuente de verdad y `specs/apertura-cuenta-tarjeta-comision.md` describe esta historia. El skill `microservices-patterns` guía los patrones; aquí se implementan en Java. Si discrepan, manda el spec.
 
 ## Servicios
 
@@ -14,13 +14,16 @@ El proyecto se trabaja con **spec** y **skills**. `spec.md` es la fuente de verd
 
 ## Ejecución local
 
-Hace falta Java 21. En esta máquina quedó instalado con Scoop en `C:\Users\fer\scoop\apps\temurin21-jdk\current`, y Scoop dejó esa ruta como `JAVA_HOME` de usuario.
+Hace falta JDK 21 y Maven. Instala un JDK 21 en tu máquina (Eclipse Temurin 21 sirve) y apunta `JAVA_HOME` a esa instalación. En PowerShell, para la sesión actual, sustituye la ruta por la de tu JDK:
 
 ```powershell
-$env:JAVA_HOME = "C:\Users\fer\scoop\apps\temurin21-jdk\current"
+$env:JAVA_HOME = "C:\ruta\a\tu\jdk-21"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+java -version
 mvn test
 ```
+
+`java -version` tiene que mostrar la 21. Si esa versión ya es la de tu sistema, ejecuta directamente `mvn test`.
 
 Para levantar los tres procesos, en terminales distintas y con Java 21:
 
@@ -38,4 +41,4 @@ La apertura se prueba con `client/apertura-cuenta.http` o importando `client/ape
 2. La misma petición con `X-Force-Failure: CARD_CREATE` responde `422`, `FAILED`, y revierte la cuenta.
 3. Cuatro aperturas con `X-Delay-Milliseconds: 2000` y una quinta sin espera: la quinta responde `503` y `PENDING_RETRY` porque el circuito de account-service está abierto.
 
-El detalle de puertos, umbrales y compensaciones está en `docs/configuracion-tecnica.md` y `docs/c4-container.md`.
+La evidencia de `mvn test` está en `docs/evidencia-ejecucion.md`. El detalle de puertos, umbrales y compensaciones está en `docs/configuracion-tecnica.md` y `docs/c4-container.md`.
