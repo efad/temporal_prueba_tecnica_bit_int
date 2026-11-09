@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #fff; color: #333; line-height: 1.6; padding: 2rem; }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.3rem; font-weight: 600; border-bottom: 1px solid #ccc; padding-bottom: .4rem; margin-bottom: 1.2rem; }
+    h2 { font-size: 1.05rem; font-weight: 600; margin: 1.3rem 0 .5rem; }
+    h3 { font-size: .92rem; font-weight: 600; margin: .8rem 0 .4rem; }
+    .badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: 2px 8px; border: 1px solid #333; margin-right: 6px; vertical-align: middle; }
+    ol, ul { padding-left: 1.5rem; }
+    li { margin-bottom: .35rem; }
+    table { width: 100%; border-collapse: collapse; margin: .5rem 0; font-size: .85rem; }
+    th { text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 2px solid #333; }
+    td { padding: 6px 8px; border-bottom: 1px solid #ddd; }
+    pre { background: #f8f8f8; padding: .8rem; overflow-x: auto; font-size: .82rem; line-height: 1.45; border: 1px solid #ddd; }
+    code { background: #f0f0f0; padding: 1px 4px; font-size: .87em; }
+    .footer { text-align: center; color: #999; font-size: .78rem; margin-top: 2rem; }
+    .section { padding: 0 0 1rem 0; margin-bottom: .75rem; border-bottom: 1px solid #eee; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1><span class="badge">ENABLER</span> [BACK] Apertura de cuenta con creación de tarjeta y cobro de comisión mediante Saga Orquestada</h1>
+
+  <div class="section">
+    <h2>Descripción</h2>
+    <p>Implementar un flujo distribuido para crear cuenta, emitir tarjeta y cobrar comisión de emisión con patrón Saga en 3 microservicios REST sin autorización, usando únicamente Orquestación y Circuit Breaker para resiliencia ante latencia alta.</p>
+  </div>
+
+  <div class="section">
+    <h2>Contexto</h2>
+    <p>El alta de cuenta con tarjeta y cobro de comisión requiere consistencia entre servicios para evitar cuentas o tarjetas huérfanas. Se necesita un orquestador que controle el flujo y active compensaciones cuando falle un paso. El patrón seleccionado es Saga con Orquestación obligatoria; no se permite Coreografía Event-Driven. Además, se requiere Circuit Breaker optimizado para prevenir fallos en cascada por dependencias lentas. La entrega debe incluir evidencia ejecutable por equipo técnico.</p>
+  </div>
+
+  <div class="section">
+    <h2>Diseño Técnico</h2>
+    <h3>Microservicios (3)</h3>
+    <ul>
+      <li><code>account-opening-orchestrator-service</code>: expone endpoint de apertura y orquesta la Saga.</li>
+      <li><code>account-service</code>: crea y revierte cuenta bancaria.</li>
+      <li><code>card-service</code>: crea y revierte tarjeta, y aplica cobro de comisión de emisión contra la cuenta creada.</li>
+    </ul>
+
+    <h3>Flujo Saga Orquestada</h3>
+    <ol>
+      <li>Orquestador crea cuenta en <code>account-service</code>.</li>
+      <li>Si cuenta creada, solicita creación de tarjeta en <code>card-service</code>.</li>
+      <li>Si tarjeta creada, <code>card-service</code> ejecuta cobro de comisión de emisión.</li>
+      <li>Si todo OK, Saga finaliza en <code>COMPLETED</code>.</li>
+      <li>Si falla tarjeta o comisión, se compensa: reverso de tarjeta (si aplica) y reverso de cuenta.</li>
+    </ol>
+
+    <h3>Resiliencia (Circuit Breaker)</h3>
+    <ul>
+      <li>Circuit Breaker por cada dependencia remota en el orquestador con timeout, umbral de slow calls y transición controlada <code>OPEN</code>/<code>HALF_OPEN</code>/<code>CLOSED</code>.</li>
+      <li>Cuando el circuito esté <code>OPEN</code>, el flujo no continúa y se registra estado <code>PENDING_RETRY</code> o <code>FAILED</code> según regla definida.</li>
+      <li>Observabilidad mínima por <code>sagaId</code>: latencia, estado de circuito, compensaciones y resultado final.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Criterios de Aceptación</h2>
+    <ol>
+      <li>CA-01 Se implementan 3 microservicios sin autorización y el orquestador consume exactamente a <code>account-service</code> y <code>card-service</code> para completar apertura de cuenta con tarjeta y comisión.</li>
+      <li>CA-02 La implementación usa únicamente Saga por Orquestación; no se permite Coreografía (Event-Driven) ni dependencia de bus de eventos para coordinar la transacción.</li>
+      <li>CA-03 Si falla la creación de tarjeta o el cobro de comisión, se ejecutan compensaciones automáticas y trazables para dejar el sistema sin artefactos inconsistentes.</li>
+      <li>CA-04 El Circuit Breaker del orquestador se activa por error y por latencia alta sostenida, bloquea llamadas en cascada y permite recuperación progresiva en <code>HALF_OPEN</code>.</li>
+      <li>CA-05 Se entrega repositorio Git con el código fuente de los 3 microservicios, README de ejecución local y pruebas automáticas (unitarias + integración mínima de Saga) con evidencia de ejecución.</li>
+      <li>CA-06 Se entrega cliente de consumo (colección Postman o cliente HTTP) con evidencia de al menos 3 escenarios: éxito completo (cuenta+tarjeta+comisión), fallo en creación de tarjeta con compensación y fallo por latencia con Circuit Breaker abierto.</li>
+      <li>CA-07 Se entregan diagramas C4 nivel 2 (Container) del flujo de orquestación y dependencias entre microservicios, junto con documento de configuración técnica con parámetros de despliegue y resiliencia.</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>Campos mínimos Request/Response por servicio</h2>
+
+    <h3>account-opening-orchestrator-service</h3>
+    <table>
+      <thead>
+        <tr><th>Tipo</th><th>Campo</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Request</td><td><code>customerId</code></td><td>Identificador del cliente.</td></tr>
+        <tr><td>Request</td><td><code>productType</code></td><td>Tipo de cuenta a abrir.</td></tr>
+        <tr><td>Request</td><td><code>accountAlias</code></td><td>Alias o nombre corto de la cuenta.</td></tr>
+        <tr><td>Request</td><td><code>cardType</code></td><td>Tipo de tarjeta a emitir.</td></tr>
+        <tr><td>Response</td><td><code>sagaId</code></td><td>Identificador único de la Saga.</td></tr>
+        <tr><td>Response</td><td><code>accountId</code></td><td>Identificador de la cuenta creada.</td></tr>
+        <tr><td>Response</td><td><code>cardId</code></td><td>Identificador de la tarjeta creada.</td></tr>
+        <tr><td>Response</td><td><code>sagaStatus</code></td><td>Estado final de la Saga.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>account-service</h3>
+    <table>
+      <thead>
+        <tr><th>Tipo</th><th>Campo</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Request</td><td><code>customerId</code></td><td>Identificador del cliente.</td></tr>
+        <tr><td>Request</td><td><code>accountType</code></td><td>Tipo de cuenta.</td></tr>
+        <tr><td>Request</td><td><code>currency</code></td><td>Moneda de la cuenta.</td></tr>
+        <tr><td>Request</td><td><code>initialDeposit</code></td><td>Monto inicial de apertura.</td></tr>
+        <tr><td>Response</td><td><code>accountId</code></td><td>Identificador de cuenta.</td></tr>
+        <tr><td>Response</td><td><code>accountNumber</code></td><td>Número de cuenta generado.</td></tr>
+        <tr><td>Response</td><td><code>status</code></td><td>Estado de creación/reverso.</td></tr>
+        <tr><td>Response</td><td><code>createdAt</code></td><td>Fecha y hora de creación.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>card-service</h3>
+    <table>
+      <thead>
+        <tr><th>Tipo</th><th>Campo</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Request</td><td><code>accountId</code></td><td>Cuenta sobre la que se emite la tarjeta.</td></tr>
+        <tr><td>Request</td><td><code>customerId</code></td><td>Identificador del cliente.</td></tr>
+        <tr><td>Request</td><td><code>cardType</code></td><td>Tipo de tarjeta.</td></tr>
+        <tr><td>Request</td><td><code>commissionAmount</code></td><td>Monto de comisión de emisión.</td></tr>
+        <tr><td>Response</td><td><code>cardId</code></td><td>Identificador de tarjeta creada.</td></tr>
+        <tr><td>Response</td><td><code>maskedPan</code></td><td>Tarjeta enmascarada.</td></tr>
+        <tr><td>Response</td><td><code>commissionStatus</code></td><td>Estado del cobro de comisión.</td></tr>
+        <tr><td>Response</td><td><code>status</code></td><td>Estado de creación/reverso.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Entregables Técnicos</h2>
+    <ul>
+      <li>Repositorio Git con código fuente versionado de <code>account-opening-orchestrator-service</code>, <code>account-service</code> y <code>card-service</code>.</li>
+      <li>Pruebas unitarias y de integración mínima del flujo Saga con evidencia de ejecución.</li>
+      <li>Cliente de consumo (colección Postman o cliente HTTP) para probar endpoints de los 3 microservicios.</li>
+      <li>Evidencia de ejecución de al menos 3 escenarios: éxito end-to-end (cuenta + tarjeta + comisión), fallo en creación de tarjeta con compensación y Circuit Breaker abierto por latencia.</li>
+      <li>Diagramas C4 nivel 2 (Container) con relación entre orquestador, servicios de cuenta y tarjeta, y puntos de compensación.</li>
+      <li>Documento de configuración técnica (timeouts, umbrales de Circuit Breaker, reintentos, variables de entorno y puertos por servicio).</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    HUT Enabler
+  </div>
+
+</div>
+</body>
+</html>
