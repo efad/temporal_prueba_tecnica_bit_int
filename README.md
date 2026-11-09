@@ -14,7 +14,7 @@ El proyecto se trabaja con **spec** y **skills**. `spec.md` es la fuente de verd
 
 ## Ejecución local
 
-Hace falta JDK 21 y Maven. Instala un JDK 21 en tu máquina (Eclipse Temurin 21 sirve) y apunta `JAVA_HOME` a esa instalación. En PowerShell, para la sesión actual, sustituye la ruta por la de tu JDK:
+Hace falta JDK 21 y Maven (Eclipse Temurin 21 sirve)  apuntando `JAVA_HOME` a esa instalación. En PowerShell, para la sesión actual:
 
 ```powershell
 $env:JAVA_HOME = "C:\ruta\a\tu\jdk-21"
@@ -23,7 +23,7 @@ java -version
 mvn test
 ```
 
-`java -version` tiene que mostrar la 21. Si esa versión ya es la de tu sistema, ejecuta directamente `mvn test`.
+`java -version` tiene que mostrar la 21. Si ya está instalado directamente `mvn test`.
 
 Para levantar los tres procesos, en terminales distintas y con Java 21:
 
