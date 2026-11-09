@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | Base aprobada. Servicios de negocio pendientes. |
-| Versión | 0.2.0 |
+| Estado | Base aprobada. Apertura de cuenta, tarjeta y comisión implementada. |
+| Versión | 0.3.0 |
 | Fecha | 2026-11-09 |
 | codigoVerificacion | `CB-SAGA-9F3A` |
 | Forma de trabajo | Spec-Driven Development |
@@ -34,7 +34,7 @@ Este documento cumple el papel habitual de un `spec.md`: contexto, objetivos, fu
 
 Se va a construir un proyecto Java con Spring Boot que expone servicios REST. Los procesos que cruzan varios servicios se coordinan con el patrón saga. Las llamadas de red hacia otra dependencia se protegen con circuit breaker y el resto de políticas de resiliencia definidas aquí.
 
-Los servicios de negocio se entregarán después. Esta versión fija la base para que todos salgan con la misma forma.
+La apertura de cuenta, tarjeta y comisión ya está implementada sobre esta base. La base sigue fijando la forma de los servicios que se añadan después.
 
 El skill `microservices-patterns` (`.agents/skills/microservices-patterns/SKILL.md` y, cuando el caso lo exija, `references/details.md`) guía límites de servicio, comunicación, datos distribuidos, saga y resiliencia. Sus ejemplos están en Python. Este repositorio los implementa en Java. Si el skill y este spec discrepan, manda este spec.
 
@@ -59,7 +59,7 @@ El skill `microservices-patterns` (`.agents/skills/microservices-patterns/SKILL.
 ## 5. Fuera de alcance de la base
 
 - Pantallas y clientes de interfaz.
-- Los casos de negocio concretos, hasta que se añadan a `specs/`.
+- Los casos de negocio que todavía no tengan archivo en `specs/`. La apertura de cuenta, tarjeta y comisión ya está en `specs/apertura-cuenta-tarjeta-comision.md`.
 - Service mesh, service discovery y despliegue en Kubernetes.
 - Event sourcing como modelo por defecto.
 - Autenticación y autorización, hasta que un servicio las pida en su spec.
