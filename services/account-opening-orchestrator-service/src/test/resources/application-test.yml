@@ -1,0 +1,17 @@
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountService:
+        sliding-window-size: 3
+        minimum-number-of-calls: 3
+        slow-call-duration-threshold: 400ms
+        slow-call-rate-threshold: 50
+        wait-duration-in-open-state: 1s
+        permitted-number-of-calls-in-half-open-state: 2
+        record-exceptions:
+          - com.pruebatecnica.platform.error.RemoteDependencyException
+          - org.springframework.web.client.ResourceAccessException
+      cardService:
+        sliding-window-size: 20
+        minimum-number-of-calls: 20
+        slow-call-duration-threshold: 5s
