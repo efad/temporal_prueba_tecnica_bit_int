@@ -7,7 +7,7 @@
 | Campo | Valor |
 | --- | --- |
 | Estado | Base aprobada. Servicios de negocio pendientes. |
-| Versión | 0.1.0 |
+| Versión | 0.2.0 |
 | Fecha | 2026-11-09 |
 | codigoVerificacion | `CB-SAGA-9F3A` |
 | Forma de trabajo | Spec-Driven Development |
@@ -83,13 +83,14 @@ El skill `microservices-patterns` (`.agents/skills/microservices-patterns/SKILL.
 | DEC-03 | Maven multi-módulo, con wrapper `mvnw`. El padre vive en la raíz y no contiene lógica de negocio. |
 | DEC-04 | Un módulo por servicio desplegable, más un módulo `platform` para el cruce técnico. |
 | DEC-05 | Paquetes por feature. Dentro de cada feature: `api`, `application`, `domain`, `infrastructure`. |
-| DEC-06 | Resiliencia con Resilience4j. El artefacto exacto del starter compatible con Spring Boot 4.1 se anota en esta fila al crear el primer `pom.xml`. |
+| DEC-06 | Resilience4j 2.4.0 con el artefacto `resilience4j-spring-boot4`. El circuito y el bulkhead envuelven al cliente HTTP. El timeout de lectura lo aplica el cliente. |
 | DEC-07 | Cliente HTTP: `RestClient`. Timeout de conexión y de respuesta obligatorios. |
 | DEC-08 | Saga orquestada y, por defecto, síncrona sobre REST. El orquestador persiste el estado en su propia base. |
 | DEC-09 | Cada servicio es dueño de su base. El producto de base de datos se elige en el spec del servicio. Recomendación inicial: PostgreSQL. |
 | DEC-10 | El contrato entre servicios es OpenAPI. Cada llamador declara sus DTO en su infraestructura. El dominio no se comparte en un jar. |
 | DEC-11 | Identificadores de código, paquetes y JSON en inglés. Este spec se escribe en español. |
 | DEC-12 | `groupId` provisional: `com.pruebatecnica`. Se confirma al crear el build. |
+| DEC-13 | Cada servicio de la apertura de cuenta usa su propia base H2 en memoria para poder ejecutarse y probarse sin infraestructura extra. PostgreSQL sigue siendo la recomendación cuando el servicio salga de local. |
 
 ## 8. Estructura del repositorio
 
@@ -204,7 +205,9 @@ Las métricas de Resilience4j y el endpoint de salud quedan expuestos por Actuat
 
 La saga la orquesta el servicio dueño del proceso de negocio. Los participantes ofrecen un comando y una compensación por su API. Cada paso persiste su resultado antes de pasar al siguiente.
 
-Estados de la instancia: `STARTED`, `COMPLETED`, `COMPENSATING`, `FAILED`, `COMPENSATION_FAILED`.
+Estados de la instancia: `STARTED`, `COMPLETED`, `COMPENSATING`, `FAILED`, `COMPENSATION_FAILED`, `PENDING_RETRY`.
+
+`PENDING_RETRY` se usa cuando el circuito está abierto o la primera llamada falla antes de crear un recurso. No hay nada que compensar y la misma `Idempotency-Key` puede reanudar la saga. Si ya existe un recurso y falla un paso posterior, se compensa y el estado final es `FAILED` o `COMPENSATION_FAILED`.
 
 | Dato de la instancia | Uso |
 | --- | --- |
@@ -258,7 +261,9 @@ Una prueba de arquitectura comprueba que `domain` no depende de Spring Web ni de
 
 | Servicio | Spec | Estado |
 | --- | --- | --- |
-| — | — | Pendiente de que se proporcionen los servicios |
+| account-opening-orchestrator-service | `specs/apertura-cuenta-tarjeta-comision.md` | implementado |
+| account-service | `specs/apertura-cuenta-tarjeta-comision.md` | implementado |
+| card-service | `specs/apertura-cuenta-tarjeta-comision.md` | implementado |
 
 ## 14. Plantilla de un servicio futuro
 
@@ -349,10 +354,10 @@ Un servicio está hecho cuando:
 | Id | Pregunta | Mientras tanto |
 | --- | --- | --- |
 | PA-01 | Nombre de producto y `groupId` definitivos | `com.pruebatecnica` |
-| PA-02 | Motor de base de cada servicio | PostgreSQL cuando haga falta persistir |
-| PA-03 | ¿Alguna saga será asíncrona y con qué broker? | REST síncrono según DEC-08 |
-| PA-04 | ¿Qué autenticación piden los servicios? | La base sale sin seguridad de usuario |
-| PA-05 | Lista de servicios y sus procesos | Sección 13 vacía a propósito |
+| PA-02 | Motor de base cuando salga de local | H2 en memoria para esta historia, según DEC-13 |
+| PA-03 | ¿Alguna saga futura será asíncrona y con qué broker? | La apertura de cuenta es REST síncrono, sin bus |
+| PA-04 | ¿Qué autenticación piden los servicios futuros? | Esta historia sale sin seguridad de usuario |
+| PA-05 | Próximos servicios de negocio | La apertura de cuenta, tarjeta y comisión ya está en la sección 13 |
 
 ## 19. Verificación
 
