@@ -25,6 +25,12 @@ mvn test
 
 `java -version` tiene que mostrar la 21. Si ya está instalado directamente `mvn test`.
 
+`account-service`, `card-service` y el orquestador dependen del módulo local `platform`. Hay que instalarlo en el repositorio local antes de arrancar un servicio suelto:
+
+```powershell
+mvn install -DskipTests
+```
+
 Para levantar los tres procesos, en terminales distintas y con Java 21:
 
 ```powershell
