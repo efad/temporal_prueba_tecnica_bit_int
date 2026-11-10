@@ -2,7 +2,7 @@
 
 Tres microservicios Spring Boot abren una cuenta, emiten una tarjeta y cobran la comisión de emisión con una saga orquestada y circuit breaker.
 
-El proyecto se trabaja con **spec** y **skills**. `spec.md` es la fuente de verdad y `specs/apertura-cuenta-tarjeta-comision.md` describe esta historia. El skill `microservices-patterns` guía los patrones; aquí se implementan en Java. Si discrepan, manda el spec.
+El proyecto se trabaja con **spec** y **skills**. `spec.md` es la constitución y la fuente de verdad: decisiones transversales, contrato HTTP, resiliencia por defecto y forma de la saga. `specs/apertura-cuenta-tarjeta-comision.md` especifica los requisitos de los servicios de la apertura: pasos de la saga, compensaciones, clientes de red y criterios de aceptación. El skill `microservices-patterns` guía los patrones; aquí se implementan en Java. Si discrepan, manda el spec.
 
 ## Servicios
 
@@ -25,10 +25,10 @@ mvn test
 
 `java -version` tiene que mostrar la 21. Si ya está instalado directamente `mvn test`.
 
-`account-service`, `card-service` y el orquestador dependen del módulo local `platform`. Hay que instalarlo en el repositorio local antes de arrancar un servicio suelto:
+`account-service`, `card-service` y el orquestador dependen del módulo local `platform`. Hay que instalarlo en el repositorio local antes de arrancar un servicio suelto, para lo cual desde el terminal ingresar al directorio clonado o donde se encuentra el proyecto realizar los siguiente pasos:
 
 ```powershell
-mvn install -DskipTests
+mvn install
 ```
 
 Para levantar los tres procesos, en terminales distintas y con Java 21:
